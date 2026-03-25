@@ -51,5 +51,7 @@ npm run dev
 npm run build
 ```
 
-## ⚖️ Legal & Attribution
+## ⚖️ License
+This project is dedicated to the public domain under the [CC0 1.0 Universal](LICENSE) license. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.
+
 H5P is a registered trademark of H5P Group. This tool is an independent project by Giovanni Fonseca and is not affiliated with H5P Group. Based on the original [H5P Theme Picker](https://github.com/otacke/h5p-theme-picker) by Oliver Tacke. Source code available on [GitHub](https://github.com/giofonseca/H5P-Theme-colours).

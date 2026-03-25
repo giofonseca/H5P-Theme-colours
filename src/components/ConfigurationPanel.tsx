@@ -1,6 +1,6 @@
 /**
  * @license
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: CC0-1.0
  */
 
 import React, { forwardRef } from 'react';
