@@ -60,8 +60,115 @@ export default function App() {
   // Handlers
   const handleFeedbackColorChange = useCallback((key: string, value: string) => {
     const sanitized = sanitizeHex(value);
+    
+    // 1. Update local feedbackColors state immediately for instant UI feedback
     setFeedbackColors(prev => ({ ...prev, [key]: sanitized }));
-  }, []);
+    
+    // 2. Try to sync with the picker element
+    const picker = pickerRef.current;
+    if (picker) {
+      // Apply CSS variable directly to the element's style
+      picker.style.setProperty(key, sanitized);
+
+      // Since the picker doesn't use Shadow DOM (as noted in the CSS fixes),
+      // we can try to find and update the internal inputs directly.
+      // This is often the most reliable way to trigger internal state changes in non-reactive custom elements.
+      try {
+        const internalInputs = picker.querySelectorAll('input');
+        internalInputs.forEach((input: any) => {
+          // Check various ways the input might be identified with the CSS variable key
+          const isMatch = 
+            input.name === key || 
+            input.id === key || 
+            input.getAttribute('data-variable') === key ||
+            input.getAttribute('data-prop') === key ||
+            input.placeholder === key;
+
+          if (isMatch) {
+            input.value = sanitized;
+            // Trigger events to make sure the picker's internal listeners catch the change
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      } catch (e) {
+        console.warn('Could not update internal inputs directly:', e);
+      }
+
+      try {
+        // Try to get current values from picker or state
+        // @ts-ignore
+        let currentValues = typeof picker.getValues === 'function' ? picker.getValues() : themeData;
+        
+        if (!currentValues && themeData) {
+          currentValues = themeData;
+        }
+
+        if (currentValues) {
+          const updatedValues = {
+            ...currentValues,
+            data: {
+              ...currentValues.data,
+              colors: {
+                ...(currentValues.data?.colors || {}),
+                [key]: sanitized
+              }
+            }
+          };
+
+          // Try various ways to push data back to the custom element
+          
+          // Method 1: setValues() if available
+          // @ts-ignore
+          if (typeof picker.setValues === 'function') {
+            // @ts-ignore
+            picker.setValues(updatedValues);
+          }
+          
+          // Method 2: themeData property
+          // @ts-ignore
+          picker.themeData = updatedValues;
+          
+          // Method 3: theme-data attribute
+          picker.setAttribute('theme-data', JSON.stringify(updatedValues));
+          
+          // Method 4: individual color attributes
+          picker.setAttribute(key, sanitized);
+          
+          // Method 5: colors property/attribute
+          // @ts-ignore
+          picker.colors = updatedValues.data.colors;
+          picker.setAttribute('colors', JSON.stringify(updatedValues.data.colors));
+
+          // Update local state to keep UI in sync
+          setThemeData(updatedValues);
+        }
+      } catch (error) {
+        console.error('Error syncing with h5p-theme-picker:', error);
+      }
+    }
+  }, [themeData]);
+
+  // Sync feedbackColors with themeData to clear overrides once they are in the source of truth
+  useEffect(() => {
+    if (themeData?.data?.colors) {
+      setFeedbackColors(prev => {
+        const next = { ...prev };
+        let changed = false;
+        
+        // If a color is now in themeData, we can remove it from our local overrides
+        // unless it's a feedback color (which the picker doesn't manage)
+        Object.keys(themeData.data.colors).forEach(key => {
+          if (key in next && !key.startsWith('--h5p-theme-feedback-')) {
+            delete next[key];
+            changed = true;
+          }
+        });
+        
+        return changed ? next : prev;
+      });
+    }
+  }, [themeData]);
 
   const autoMatchToBrand = useCallback(() => {
     if (!themeData) return;
@@ -134,7 +241,7 @@ export default function App() {
             />
 
             <AccessibilityPanel 
-              feedbackColors={feedbackColors}
+              allColors={allColors}
               onColorChange={handleFeedbackColorChange}
             />
           </section>
