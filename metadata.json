@@ -1,0 +1,5 @@
+{
+  "name": "H5P Theme for Moodle",
+  "description": "A web application to generate the CSS needed to customise the H5P Theme in Moodle",
+  "requestFramePermissions": []
+}
