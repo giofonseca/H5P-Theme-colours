@@ -13,11 +13,21 @@ interface FeedbackColorsPanelProps {
   onAutoMatch: () => void;
 }
 
+/**
+ * FeedbackColorsPanel Component
+ * 
+ * This panel allows users to manually adjust the colors for different feedback states 
+ * (Correct, Incorrect, Neutral). It also provides an "Auto-match to Brand" feature 
+ * that automatically generates harmonious feedback colors based on the current brand color.
+ */
 export const FeedbackColorsPanel: React.FC<FeedbackColorsPanelProps> = ({
   feedbackColors,
   onColorChange,
   onAutoMatch
 }) => {
+  /**
+   * Helper to return the appropriate Lucide icon for a feedback type.
+   */
   const getIcon = (iconName: string) => {
     switch (iconName) {
       case 'Check': return <Check size={14} />;
@@ -31,6 +41,12 @@ export const FeedbackColorsPanel: React.FC<FeedbackColorsPanelProps> = ({
     <div className="bg-white p-8 rounded-3xl shadow-sm border border-neutral-100">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xs uppercase tracking-widest font-semibold text-neutral-400">Feedback Colors</h2>
+        {/* 
+          Auto-match Button:
+          Triggers the generation of feedback colors based on the brand's HSL profile.
+          This ensures the feedback states (Correct, Incorrect, Neutral) feel like 
+          part of the same design system as the rest of the theme.
+        */}
         <button 
           onClick={onAutoMatch}
           className="flex items-center gap-2 text-[10px] uppercase tracking-wider bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-full transition-all border border-blue-100 font-bold"
@@ -51,17 +67,34 @@ export const FeedbackColorsPanel: React.FC<FeedbackColorsPanelProps> = ({
               const key = `--h5p-theme-feedback-${type.prefix}-${id}`;
               return (
                 <div key={key} className="space-y-1">
+                  {/* 
+                    Color Inputs:
+                    Each feedback type has a Main, Secondary, and Third color.
+                    Main: The primary color for the state (e.g., solid green).
+                    Secondary: A very light background version.
+                    Third: A slightly darker background or border version.
+                  */}
                   <label className="text-[9px] text-neutral-400 uppercase tracking-tighter block">{label}</label>
                   <div className="flex items-center gap-2">
+                    {/* 
+                      Native Color Picker Input:
+                      Provides a visual way to select colors. 
+                      Fallback value ensures it's always a controlled component.
+                    */}
                     <input 
                       type="color" 
-                      value={feedbackColors[key]} 
+                      value={feedbackColors[key] || '#000000'} 
                       onChange={(e) => onColorChange(key, e.target.value)}
                       className="w-8 h-8 rounded-lg cursor-pointer border-none bg-transparent"
                     />
+                    {/* 
+                      Text Input for Hex Values:
+                      Allows precise entry of hex codes. 
+                      Fallback value ensures it's always a controlled component.
+                    */}
                     <input 
                       type="text" 
-                      value={feedbackColors[key]} 
+                      value={feedbackColors[key] || ''} 
                       onChange={(e) => onColorChange(key, e.target.value)}
                       className="flex-1 text-[10px] font-mono p-1.5 border border-neutral-100 rounded bg-neutral-50 uppercase"
                     />

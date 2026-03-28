@@ -1,5 +1,5 @@
 {
-  "name": "H5P Theme Picker (CSS Generator)",
-  "description": "A web application to generate the CSS needed to customise the H5P Theme in Moodle",
+  "name": "H5P Theme Picker to CSS",
+  "description": "A web application to generate the CSS needed to customise the H5P Theme in Moodle.",
   "requestFramePermissions": []
 }

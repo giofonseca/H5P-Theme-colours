@@ -5,6 +5,14 @@
 
 import React from 'react';
 
+/**
+ * Footer Component
+ * 
+ * Displays trademark information, credits, and links to external resources.
+ * 
+ * Includes necessary legal disclaimers regarding H5P trademarks and 
+ * project affiliations.
+ */
 export const Footer: React.FC = () => {
   return (
     <footer className="pt-12 border-t border-neutral-200 text-center space-y-4">

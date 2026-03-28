@@ -23,143 +23,139 @@ import { ResultsPanel } from './components/ResultsPanel';
 import { Footer } from './components/Footer';
 
 export default function App() {
+  // Reference to the h5p-theme-picker custom element
   const pickerRef = useRef<HTMLElement>(null);
+  
+  // State to store the current theme configuration received from the picker
+  // This includes the theme name, density, and all CSS color variables.
   const [themeData, setThemeData] = useState<ThemeChangeDetail | null>(null);
+  
+  // State to store local overrides for feedback-related CSS variables
+  // These are merged with the picker's colors to create the final theme.
   const [feedbackColors, setFeedbackColors] = useState<Record<string, string>>(DEFAULT_FEEDBACK_COLORS);
+  
+  // State to manage visual feedback for the "Copy to Clipboard" action
+  // Used to toggle the button text from "Copy" to "Copied!".
   const [copied, setCopied] = useState(false);
 
-  // Initialize theme picker listener
+  /**
+   * Effect: Initialize the theme picker listener.
+   * Listens for 'theme-change' events from the custom element and updates local state.
+   * This is now a ONE-WAY synchronization: we only receive data from the picker.
+   */
   useEffect(() => {
     const picker = pickerRef.current;
     if (!picker) return;
 
     const handleChange = (event: CustomEvent<ThemeChangeDetail>) => {
-      setThemeData(event.detail);
+      const data = event.detail;
+      setThemeData(data);
+
+      // PATCH: H5P Bug Workaround
+      // Some H5P components expect --color-base instead of --h5p-theme-main-cta-base.
+      // This ensures the root variable is updated when the picker changes.
+      const mainCta = data.data.colors['--h5p-theme-main-cta-base'];
+      if (mainCta) {
+        document.documentElement.style.setProperty('--color-base', mainCta);
+      }
     };
 
     picker.addEventListener('theme-change', handleChange as EventListener);
 
     // Initial values if already loaded
+    // Some custom elements might already have values if they were initialized before the listener.
     // @ts-ignore - getValues is a method on the custom element
     if (typeof picker.getValues === 'function') {
       // @ts-ignore
-      setThemeData(picker.getValues());
+      const initialData = picker.getValues();
+      setThemeData(initialData);
+
+      // PATCH: H5P Bug Workaround
+      // Ensure --color-base is set on mount if the picker already has values.
+      const mainCta = initialData.data.colors['--h5p-theme-main-cta-base'];
+      if (mainCta) {
+        document.documentElement.style.setProperty('--color-base', mainCta);
+      }
     }
 
     return () => {
       picker.removeEventListener('theme-change', handleChange as EventListener);
     };
-  }, []);
+  }, []); // Only run once on mount
 
-  // Memoized derived data
-  const allColors = useMemo(() => ({
-    ...(themeData?.data.colors || {}),
-    ...feedbackColors
-  }), [themeData, feedbackColors]);
+  /**
+   * Memoized derived data: allColors
+   * Combines colors from the picker's themeData and local feedbackColors overrides.
+   * This is the source of truth for the final CSS generation.
+   */
+  const allColors = useMemo(() => {
+    const colors = {
+      ...(themeData?.data.colors || {}),
+      ...feedbackColors
+    };
 
-  // Handlers
+    // PATCH: H5P Bug Workaround
+    // Some H5P components expect --color-base instead of --h5p-theme-main-cta-base.
+    // This is a temporary patch that can be removed once H5P is updated.
+    if (colors['--h5p-theme-main-cta-base']) {
+      colors['--color-base'] = colors['--h5p-theme-main-cta-base'];
+    }
+
+    return colors;
+  }, [themeData, feedbackColors]);
+
+  /**
+   * Handler: handleFeedbackColorChange
+   * 
+   * Updates local state and document root CSS variables.
+   * Synchronization back to the h5p-theme-picker has been REMOVED to prevent 
+   * dependency issues and unexpected resets.
+   * 
+   * @param key - The CSS variable name (e.g., '--h5p-theme-main-cta-base')
+   * @param value - The new hex color value
+   */
   const handleFeedbackColorChange = useCallback((key: string, value: string) => {
     const sanitized = sanitizeHex(value);
     
-    // 1. Update local feedbackColors state immediately for instant UI feedback
-    setFeedbackColors(prev => ({ ...prev, [key]: sanitized }));
+    // 1. Update local feedbackColors state immediately for instant UI feedback in panels
+    setFeedbackColors(prev => {
+      const next = { ...prev, [key]: sanitized };
+      
+      // PATCH: H5P Bug Workaround
+      // Ensure --color-base always matches --h5p-theme-main-cta-base
+      if (key === '--h5p-theme-main-cta-base') {
+        next['--color-base'] = sanitized;
+      }
+      
+      return next;
+    });
     
-    // 2. Try to sync with the picker element
-    const picker = pickerRef.current;
-    if (picker) {
-      // Apply CSS variable directly to the element's style
-      picker.style.setProperty(key, sanitized);
+    // 2. Apply to document root for global availability
+    document.documentElement.style.setProperty(key, sanitized);
 
-      // Since the picker doesn't use Shadow DOM (as noted in the CSS fixes),
-      // we can try to find and update the internal inputs directly.
-      // This is often the most reliable way to trigger internal state changes in non-reactive custom elements.
-      try {
-        const internalInputs = picker.querySelectorAll('input');
-        internalInputs.forEach((input: any) => {
-          // Check various ways the input might be identified with the CSS variable key
-          const isMatch = 
-            input.name === key || 
-            input.id === key || 
-            input.getAttribute('data-variable') === key ||
-            input.getAttribute('data-prop') === key ||
-            input.placeholder === key;
-
-          if (isMatch) {
-            input.value = sanitized;
-            // Trigger events to make sure the picker's internal listeners catch the change
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-        });
-      } catch (e) {
-        console.warn('Could not update internal inputs directly:', e);
-      }
-
-      try {
-        // Try to get current values from picker or state
-        // @ts-ignore
-        let currentValues = typeof picker.getValues === 'function' ? picker.getValues() : themeData;
-        
-        if (!currentValues && themeData) {
-          currentValues = themeData;
-        }
-
-        if (currentValues) {
-          const updatedValues = {
-            ...currentValues,
-            data: {
-              ...currentValues.data,
-              colors: {
-                ...(currentValues.data?.colors || {}),
-                [key]: sanitized
-              }
-            }
-          };
-
-          // Try various ways to push data back to the custom element
-          
-          // Method 1: setValues() if available
-          // @ts-ignore
-          if (typeof picker.setValues === 'function') {
-            // @ts-ignore
-            picker.setValues(updatedValues);
-          }
-          
-          // Method 2: themeData property
-          // @ts-ignore
-          picker.themeData = updatedValues;
-          
-          // Method 3: theme-data attribute
-          picker.setAttribute('theme-data', JSON.stringify(updatedValues));
-          
-          // Method 4: individual color attributes
-          picker.setAttribute(key, sanitized);
-          
-          // Method 5: colors property/attribute
-          // @ts-ignore
-          picker.colors = updatedValues.data.colors;
-          picker.setAttribute('colors', JSON.stringify(updatedValues.data.colors));
-
-          // Update local state to keep UI in sync
-          setThemeData(updatedValues);
-        }
-      } catch (error) {
-        console.error('Error syncing with h5p-theme-picker:', error);
-      }
+    // PATCH: H5P Bug Workaround
+    if (key === '--h5p-theme-main-cta-base') {
+      document.documentElement.style.setProperty('--color-base', sanitized);
     }
-  }, [themeData]);
+  }, []);
 
-  // Sync feedbackColors with themeData to clear overrides once they are in the source of truth
+  /**
+   * Effect: Sync feedbackColors with themeData.
+   * 
+   * This effect monitors changes in themeData (from the picker).
+   * If a color that was previously a local override in feedbackColors is now 
+   * present in themeData, we remove it from feedbackColors.
+   * This ensures that the picker's state eventually becomes the source of truth 
+   * for those variables, preventing redundant state management.
+   */
   useEffect(() => {
     if (themeData?.data?.colors) {
       setFeedbackColors(prev => {
         const next = { ...prev };
         let changed = false;
         
-        // If a color is now in themeData, we can remove it from our local overrides
-        // unless it's a feedback color (which the picker doesn't manage)
         Object.keys(themeData.data.colors).forEach(key => {
-          if (key in next && !key.startsWith('--h5p-theme-feedback-')) {
+          if (key in next) {
             delete next[key];
             changed = true;
           }
@@ -170,6 +166,18 @@ export default function App() {
     }
   }, [themeData]);
 
+  /**
+   * Handler: autoMatchToBrand
+   * 
+   * Generates a complete set of harmonious feedback colors (Correct, Incorrect, Neutral)
+   * based on the current brand color's HSL profile.
+   * 
+   * This ensures that feedback states feel like an integrated part of the theme 
+   * rather than arbitrary colors.
+   * 
+   * Synchronization back to the h5p-theme-picker has been REMOVED to prevent 
+   * state loops and unexpected resets.
+   */
   const autoMatchToBrand = useCallback(() => {
     if (!themeData) return;
     
@@ -187,7 +195,7 @@ export default function App() {
     const incorrect = generateFeedbackSet(0, saturation, lightness);
     const neutral = generateFeedbackSet(45, saturation, lightness);
 
-    setFeedbackColors({
+    const newColors = {
       '--h5p-theme-feedback-correct-main': correct.main,
       '--h5p-theme-feedback-correct-secondary': correct.secondary,
       '--h5p-theme-feedback-correct-third': correct.third,
@@ -197,9 +205,18 @@ export default function App() {
       '--h5p-theme-feedback-neutral-main': neutral.main,
       '--h5p-theme-feedback-neutral-secondary': neutral.secondary,
       '--h5p-theme-feedback-neutral-third': neutral.third,
-    });
-  }, [themeData]);
+    };
 
+    // Apply each generated color to the local state only.
+    Object.entries(newColors).forEach(([key, value]) => {
+      handleFeedbackColorChange(key, value);
+    });
+  }, [themeData, handleFeedbackColorChange]);
+
+  /**
+   * Handler: copyToClipboard
+   * Formats the current color variables into a CSS :root block and copies it to the clipboard.
+   */
   const copyToClipboard = useCallback(() => {
     const css = `:root {\n${Object.entries(allColors)
       .map(([key, value]) => `  ${key}: ${value};`)
@@ -209,6 +226,10 @@ export default function App() {
     setTimeout(() => setCopied(false), 2000);
   }, [allColors]);
 
+  /**
+   * Handler: downloadCss
+   * Generates a .css file containing the theme variables and triggers a download.
+   */
   const downloadCss = useCallback(() => {
     if (!themeData) return;
     const css = `/* H5P Custom Theme: ${themeData.theme} */\n:root {\n${Object.entries(allColors)
@@ -232,17 +253,19 @@ export default function App() {
 
         <main className="grid grid-cols-1 gap-12">
           <section className="space-y-6">
-            <ConfigurationPanel ref={pickerRef} />
+            <ConfigurationPanel 
+              ref={pickerRef} 
+            />
             
             <FeedbackColorsPanel 
-              feedbackColors={feedbackColors} 
-              onColorChange={handleFeedbackColorChange}
+              feedbackColors={allColors} 
+              onColorChange={(key, val) => handleFeedbackColorChange(key, val)}
               onAutoMatch={autoMatchToBrand}
             />
-
+ 
             <AccessibilityPanel 
               allColors={allColors}
-              onColorChange={handleFeedbackColorChange}
+              onColorChange={(key, val) => handleFeedbackColorChange(key, val)}
             />
           </section>
 
@@ -257,30 +280,6 @@ export default function App() {
 
         <Footer />
       </div>
-
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #333;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #444;
-        }
-        
-        /* Fix for potential spillover from h5p-theme-picker as it doesn't use Shadow DOM */
-        h5p-theme-picker select {
-          @apply w-full p-2 rounded-lg border border-neutral-200 bg-neutral-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all;
-        }
-        h5p-theme-picker label {
-          @apply block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2;
-        }
-      `}</style>
     </div>
   );
 }

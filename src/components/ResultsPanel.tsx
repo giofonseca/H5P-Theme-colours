@@ -14,6 +14,12 @@ interface ResultsPanelProps {
   isCopied?: boolean;
 }
 
+/**
+ * ResultsPanel Component
+ * Displays the generated CSS variables in a code block.
+ * Provides functionality to copy the CSS to the clipboard or download it as a file.
+ * Includes instructions for Moodle administrators on how to apply the CSS.
+ */
 export const ResultsPanel: React.FC<ResultsPanelProps> = ({
   themeData,
   allColors,
@@ -50,6 +56,10 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
           </div>
         </div>
         
+        {/* 
+          Conditional Rendering:
+          Only show the output once themeData has been received from the picker.
+        */}
         {themeData ? (
           <div className="space-y-6">
             <div className="flex justify-between items-end border-b border-neutral-800 pb-4">
@@ -64,12 +74,18 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
             </div>
 
             <div className="space-y-4">
+              {/* 
+                CSS Variables Display:
+                This section iterates through all generated CSS variables (both from the picker 
+                and our feedback overrides) and displays them in a formatted code block.
+              */}
               <div className="bg-black/30 rounded-xl p-4 font-mono text-[10px] leading-relaxed max-h-[400px] overflow-y-auto custom-scrollbar">
                 <span className="text-purple-400">:root</span> {'{'}
                 {Object.entries(allColors).map(([key, value]) => {
                   const val = value as string;
                   return (
                     <div key={key} className="pl-4 flex items-center gap-3 py-0.5 group">
+                      {/* Small color preview box next to each variable */}
                       <div 
                         className="w-2.5 h-2.5 rounded-sm border border-white/20 flex-shrink-0 shadow-sm" 
                         style={{ 
@@ -91,6 +107,11 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
               </div>
             </div>
 
+            {/* 
+              Moodle Admin Instructions:
+              Provides clear, step-by-step guidance for Moodle administrators on how 
+              to apply the generated CSS variables to their site.
+            */}
             <div className="bg-neutral-800/50 p-4 rounded-xl border border-neutral-800">
               <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-2 font-semibold">Moodle Admin Instructions</p>
               <ol className="text-[10px] text-neutral-500 space-y-1 list-decimal pl-4">

@@ -13,10 +13,23 @@ interface AccessibilityPanelProps {
   onColorChange: (key: string, value: string) => void;
 }
 
+/**
+ * AccessibilityPanel Component
+ * Performs real-time WCAG 2.0 contrast checks for theme colors.
+ * Displays contrast ratios and provides one-click "Apply" buttons for suggested compliant colors.
+ */
 export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
   allColors,
   onColorChange
 }) => {
+  /**
+   * Helper to determine the WCAG compliance status based on the contrast ratio.
+   * 
+   * WCAG 2.0 Levels:
+   * - AAA (7:1): Enhanced contrast for maximum readability.
+   * - AA (4.5:1): Minimum contrast for normal text.
+   * - Large Text (3:1): Minimum contrast for large text (>= 18pt or 14pt bold).
+   */
   const getWCAGStatus = (ratio: number) => {
     if (ratio >= 7) return { label: 'AAA (Pass)', color: 'text-green-600', bg: 'bg-green-50', icon: <Check size={12} /> };
     if (ratio >= 4.5) return { label: 'AA (Pass)', color: 'text-blue-600', bg: 'bg-blue-50', icon: <Check size={12} /> };
@@ -24,9 +37,13 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
     return { label: 'Fail', color: 'text-red-600', bg: 'bg-red-50', icon: <X size={12} /> };
   };
 
+  /**
+   * Defines the color pairs to be checked for contrast.
+   * We compare the foreground (text) against its background (button/surface).
+   */
   const ctaColors = [
-    { key: '--h5p-theme-main-cta-base', name: 'Main CTA' },
-    { key: '--h5p-theme-secondary-cta-base', name: 'Secondary CTA' }
+    { fgKey: '--h5p-theme-contrast-cta', bgKey: '--h5p-theme-main-cta-base', name: 'Main CTA' },
+    { fgKey: '--h5p-theme-secondary-contrast-cta', bgKey: '--h5p-theme-secondary-cta-base', name: 'Secondary CTA' }
   ];
 
   return (
@@ -36,19 +53,22 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
       </div>
 
       <div className="space-y-12">
-        {/* CTA Colors Section */}
+        {/* 
+          CTA Colors Section:
+          Checks the contrast between the text and the main background of the primary and secondary buttons.
+        */}
         <div className="space-y-6">
-          <h3 className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 border-b border-neutral-100 pb-2">Call to Action Colors (vs White)</h3>
+          <h3 className="text-[10px] uppercase tracking-widest font-bold text-neutral-500 border-b border-neutral-100 pb-2">Call to Action Colors</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {ctaColors.map((cta) => {
-              const fg = allColors[cta.key] || '#000000';
-              const bg = '#ffffff'; // Assuming white background for CTAs
+              const fg = allColors[cta.fgKey] || '#ffffff';
+              const bg = allColors[cta.bgKey] || '#000000';
               const ratio = getContrastRatio(fg, bg);
               const status = getWCAGStatus(ratio);
               const suggestion = suggestBetterColor(fg, bg);
 
               return (
-                <div key={cta.key} className="space-y-4">
+                <div key={cta.fgKey} className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="text-[10px] uppercase tracking-widest font-bold text-neutral-700">{cta.name}</h4>
                     <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight ${status.bg} ${status.color}`}>
@@ -65,7 +85,7 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
 
                     <div 
                       className="h-12 rounded-lg flex items-center justify-center text-sm font-bold shadow-inner"
-                      style={{ backgroundColor: fg, color: bg }}
+                      style={{ backgroundColor: bg, color: fg }}
                     >
                       Button Text
                     </div>
@@ -73,7 +93,7 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                     {suggestion && (
                       <div className="pt-3 border-t border-neutral-200 space-y-2">
                         <p className="text-[9px] text-red-500 font-medium leading-tight">
-                          Warning: This color might be hard to read on light backgrounds.
+                          Warning: The text color might be hard to read on this button.
                         </p>
                         <div className="flex items-center justify-between bg-white p-2 rounded-lg border border-neutral-200">
                           <div className="flex items-center gap-2">
@@ -81,7 +101,7 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
                             <span className="text-[10px] font-mono text-neutral-600">{suggestion}</span>
                           </div>
                           <button 
-                            onClick={() => onColorChange(cta.key, suggestion)}
+                            onClick={() => onColorChange(cta.fgKey, suggestion)}
                             className="flex items-center gap-1 text-[9px] text-blue-600 hover:text-blue-700 font-bold uppercase tracking-tighter"
                             title="Apply suggested color"
                           >
@@ -105,8 +125,8 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
             {FEEDBACK_TYPES.map((type) => {
               const fgKey = `--h5p-theme-feedback-${type.prefix}-main`;
               const bgKey = `--h5p-theme-feedback-${type.prefix}-secondary`;
-              const fg = allColors[fgKey];
-              const bg = allColors[bgKey];
+              const fg = allColors[fgKey] || '#000000';
+              const bg = allColors[bgKey] || '#ffffff';
               const ratio = getContrastRatio(fg, bg);
               const status = getWCAGStatus(ratio);
               const suggestion = suggestBetterColor(fg, bg);

@@ -1,1 +1,42 @@
 @import "tailwindcss";
+
+@theme {
+  --animate-spin-slow: spin 3s linear infinite;
+}
+
+@layer base {
+  body {
+    @apply bg-neutral-50;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* Fix for potential spillover from h5p-theme-picker as it doesn't use Shadow DOM */
+.theme-picker-container h5p-theme-picker select {
+  @apply w-full p-2 rounded-lg border border-neutral-200 bg-neutral-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all;
+}
+.theme-picker-container h5p-theme-picker label {
+  @apply block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-2;
+}
+.theme-picker-container h5p-theme-picker input[type="text"] {
+  @apply w-full p-2 rounded-lg border border-neutral-200 bg-neutral-50 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all;
+}
+.theme-picker-container h5p-theme-picker input[type="color"] {
+  @apply w-8 h-8 rounded-lg cursor-pointer border-none bg-transparent;
+}
+.theme-picker-container h5p-theme-picker button {
+  @apply px-4 py-2 rounded-lg transition-all font-medium;
+}
