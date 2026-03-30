@@ -23,7 +23,7 @@ export const Header: React.FC = () => {
         <div className="space-y-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Step 01</p>
           <p className="text-sm text-neutral-600 leading-relaxed">
-            Pick a theme or customise yours under the configuration panel. Density doesn't work at the moment.
+            Pick a theme or customise yours under the configuration panel.
           </p>
         </div>
         <div className="space-y-2">
