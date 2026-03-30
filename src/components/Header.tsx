@@ -29,7 +29,7 @@ export const Header: React.FC = () => {
         <div className="space-y-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Step 02</p>
           <p className="text-sm text-neutral-600 leading-relaxed">
-            Customise feedback colour optionally, normally H5P Group keeps those constant cross themes, but you can try to find more appealing colors based on it. ⚠️ Notice that passing density values to CSS is not availbale at the moment!
+            Customise feedback colour optionally, normally H5P Group keeps those constant cross themes, but you can try to find more appealing colors based on it. ⚠️ Notice that passing density values to CSS is not available at the moment!
           </p>
         </div>
         <div className="space-y-2">
