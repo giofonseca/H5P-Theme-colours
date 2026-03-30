@@ -9,14 +9,19 @@ import { FEEDBACK_TYPES } from '../constants';
 import { getContrastRatio, suggestBetterColor } from '../lib/colorUtils';
 
 interface AccessibilityPanelProps {
+  /** Dictionary of all current CSS variables and their hex values */
   allColors: Record<string, string>;
+  /** Callback triggered when a color is manually updated or a suggestion is applied */
   onColorChange: (key: string, value: string) => void;
 }
 
 /**
  * AccessibilityPanel Component
+ * 
  * Performs real-time WCAG 2.0 contrast checks for theme colors.
  * Displays contrast ratios and provides one-click "Apply" buttons for suggested compliant colors.
+ * 
+ * @param {AccessibilityPanelProps} props - The component props.
  */
 export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
   allColors,
@@ -29,6 +34,9 @@ export const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({
    * - AAA (7:1): Enhanced contrast for maximum readability.
    * - AA (4.5:1): Minimum contrast for normal text.
    * - Large Text (3:1): Minimum contrast for large text (>= 18pt or 14pt bold).
+   * 
+   * @param {number} ratio - The calculated contrast ratio.
+   * @returns {Object} A status object with label, color, bg, and icon.
    */
   const getWCAGStatus = (ratio: number) => {
     if (ratio >= 7) return { label: 'AAA (Pass)', color: 'text-green-600', bg: 'bg-green-50', icon: <Check size={12} /> };

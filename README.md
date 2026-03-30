@@ -1,57 +1,62 @@
-# H5P Theme Picker (CSS Generator)
+# H5P Theme Picker & Live Preview
 
-A specialized tool designed to generate the CSS variables required to customize the H5P theme in Moodle. This application provides a real-time preview, intelligent color generation, and comprehensive accessibility validation.
+A specialized tool for designing and testing custom themes for H5P content, specifically optimized for Moodle (`mod_hvp`) and WordPress integrations.
 
-## 🚀 Key Features
+## Features
 
-*   **Real-time Preview**: Integrates the `h5p-theme-picker` custom element for an instant look at your theme changes.
-*   **Intelligent Feedback Colors**: 
-    *   **Auto-match to Brand**: Generate harmonious Correct, Incorrect, and Neutral color sets based on your primary brand color with a single click.
-    *   **Manual Control**: Fine-tune every feedback state color (Main, Secondary, Third).
-*   **Comprehensive Accessibility Check**:
-    *   **WCAG 2.0 Validation**: Real-time contrast ratio calculations for all feedback states and Call to Action (CTA) colors.
-    *   **One-Click Fixes**: Intelligent suggestions for compliant colors that can be applied instantly.
-    *   **Prioritized UX**: CTA accessibility is prioritized for better visibility of primary actions.
-*   **Robust Synchronization**: Multi-layered sync mechanism ensures that changes in the accessibility panel or feedback settings are instantly reflected in the final CSS output.
-*   **Export for Moodle**: Copy or download the generated CSS variables, ready to be pasted into Moodle's custom CSS settings.
+- **Brand-Driven Design**: Select a primary brand color and automatically generate harmonious feedback states (Correct, Incorrect, Neutral).
+- **Accessibility First**: Real-time WCAG contrast checking for all color combinations.
+- **H5P Live Preview (Alpha)**: A specialized proxy-based preview that allows you to see your custom theme applied to *any* live H5P embed URL.
+- **Moodle Compatibility**: Injects CSS variables and compatibility scripts to ensure the "Modern" H5P look and feel works across different platforms.
 
-## 🛠️ How to Use
+## Project Structure
 
-1.  **Configure the Base Theme**: Select your base H5P theme (e.g., Daylight) and density in the "Configuration" panel.
-2.  **Adjust Colors**: Use the "Feedback Colors" panel to set your states. Try "Auto-match to Brand" for a quick, professional look.
-3.  **Validate Accessibility**: Check the "Accessibility Check" panel. Apply suggested colors to ensure your theme is inclusive and compliant.
-4.  **Apply to Moodle**:
-    *   Copy the CSS from the "Moodle CSS Output" section.
-    *   In Moodle: `Site Administration > Appearance > Themes > [Your Theme] > Advanced Settings`.
-    *   Paste into the **"Custom CSS"** field.
+- `server.ts`: Express server that handles the H5P proxy logic, asset normalization, and style injection.
+- `src/App.tsx`: Main application state and layout.
+- `src/components/`:
+  - `H5PPreviewPanel.tsx`: The live preview component with Alpha toggle.
+  - `FeedbackColorsPanel.tsx`: Controls for Correct/Incorrect/Neutral states.
+  - `AccessibilityPanel.tsx`: Real-time WCAG contrast reports.
+  - `ConfigurationPanel.tsx`: Brand color and density controls.
+- `src/constants.ts`: Default color values and configuration.
+- `src/types.ts`: TypeScript interfaces for theme data.
 
-## 💻 Technical Implementation
+## Security & Reusability
 
-### Bidirectional Synchronization
-The app implements a sophisticated sync strategy for the `h5p-theme-picker` custom element:
-*   **Direct Input Manipulation**: Updates internal form elements of the picker directly for maximum compatibility.
-*   **CSS Variable Injection**: Sets variables on the element's style object for immediate visual feedback.
-*   **Multi-API Support**: Supports `setValues()`, `themeData` properties, and `theme-data` attributes.
+This project includes several production-ready security mitigations:
 
-### Color Utilities (`src/lib/colorUtils.ts`)
-*   `getContrastRatio`: Precise WCAG contrast calculation.
-*   `suggestBetterColor`: Algorithmic color adjustment to meet 4.5:1 ratio.
-*   `generateFeedbackSet`: HSL-based generation of harmonious color triads.
+- **SSRF Protection**: The H5P proxy validates all URLs and blocks access to internal or private IP ranges (e.g., `localhost`, `10.x.x.x`).
+- **XSS Sanitization**: All custom CSS variables are sanitized before injection to prevent script injection via malicious theme configurations.
+- **Request Timeouts**: The proxy includes a 10-second timeout to prevent resource exhaustion from slow or hanging external targets.
+- **Detailed JSDoc**: All components and utility functions are documented with JSDoc for easy reusability and maintenance.
 
-## 📦 Development
+## How the H5P Proxy Works
+
+Because H5P content is typically served from a different domain than the theme picker, standard iframes cannot be styled due to CORS restrictions. 
+
+This project uses a specialized backend proxy (`/api/proxy-h5p`) that:
+1. Fetches the H5P HTML from the target URL.
+2. Normalizes all relative asset paths (JS, CSS, fonts) to absolute URLs.
+3. Injects custom CSS variables into the `<head>`.
+4. Injects a compatibility script that ensures styles propagate into nested H5P iframes.
+5. Returns the modified HTML to be rendered in a `srcDoc` iframe.
+
+## Development
 
 ```bash
-# Install dependencies
 npm install
-
-# Run development server
 npm run dev
-
-# Build for production
-npm run build
 ```
 
-## ⚖️ License
-This project is dedicated to the public domain under the [CC0 1.0 Universal](LICENSE) license. You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.
+The application runs on port 3000.
 
-H5P is a registered trademark of H5P Group. This tool is an independent project by Giovanni Fonseca and is not affiliated with H5P Group. Based on the original [H5P Theme Picker](https://github.com/otacke/h5p-theme-picker) by Oliver Tacke. Source code available on [GitHub](https://github.com/giofonseca/H5P-Theme-colours).
+## Production
+
+```bash
+npm run build
+npm start
+```
+
+## License
+
+CC0-1.0

@@ -8,8 +8,11 @@ import { Sparkles, Check, X, Info } from 'lucide-react';
 import { FEEDBACK_TYPES, FEEDBACK_FIELDS } from '../constants';
 
 interface FeedbackColorsPanelProps {
+  /** Dictionary of all current CSS variables and their hex values */
   feedbackColors: Record<string, string>;
+  /** Callback triggered when a color is manually updated via input */
   onColorChange: (key: string, value: string) => void;
+  /** Callback to trigger the automatic generation of feedback colors based on brand */
   onAutoMatch: () => void;
 }
 
@@ -19,6 +22,8 @@ interface FeedbackColorsPanelProps {
  * This panel allows users to manually adjust the colors for different feedback states 
  * (Correct, Incorrect, Neutral). It also provides an "Auto-match to Brand" feature 
  * that automatically generates harmonious feedback colors based on the current brand color.
+ * 
+ * @param {FeedbackColorsPanelProps} props - The component props.
  */
 export const FeedbackColorsPanel: React.FC<FeedbackColorsPanelProps> = ({
   feedbackColors,
@@ -27,6 +32,9 @@ export const FeedbackColorsPanel: React.FC<FeedbackColorsPanelProps> = ({
 }) => {
   /**
    * Helper to return the appropriate Lucide icon for a feedback type.
+   * 
+   * @param {string} iconName - The name of the icon ('Check', 'X', 'Info').
+   * @returns {React.ReactNode} The Lucide icon component.
    */
   const getIcon = (iconName: string) => {
     switch (iconName) {

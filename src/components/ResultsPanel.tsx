@@ -7,18 +7,26 @@ import React from 'react';
 import { ThemeChangeDetail } from '../types';
 
 interface ResultsPanelProps {
+  /** The current theme configuration received from the picker */
   themeData: ThemeChangeDetail | null;
+  /** Dictionary of all current CSS variables and their hex values */
   allColors: Record<string, string>;
+  /** Callback to copy the CSS to the clipboard */
   onCopy: () => void;
+  /** Callback to download the CSS as a file */
   onDownload: () => void;
+  /** Optional flag to show "Copied!" state on the button */
   isCopied?: boolean;
 }
 
 /**
  * ResultsPanel Component
+ * 
  * Displays the generated CSS variables in a code block.
  * Provides functionality to copy the CSS to the clipboard or download it as a file.
  * Includes instructions for Moodle administrators on how to apply the CSS.
+ * 
+ * @param {ResultsPanelProps} props - The component props.
  */
 export const ResultsPanel: React.FC<ResultsPanelProps> = ({
   themeData,

@@ -19,9 +19,23 @@ import { Header } from './components/Header';
 import { ConfigurationPanel } from './components/ConfigurationPanel';
 import { FeedbackColorsPanel } from './components/FeedbackColorsPanel';
 import { AccessibilityPanel } from './components/AccessibilityPanel';
+import { H5PPreviewPanel } from './components/H5PPreviewPanel';
 import { ResultsPanel } from './components/ResultsPanel';
 import { Footer } from './components/Footer';
 
+/**
+ * App Component
+ * 
+ * The main entry point of the H5P Theme Picker application.
+ * It orchestrates the state management between the custom element theme picker 
+ * and the React-based configuration panels and preview.
+ * 
+ * Key Responsibilities:
+ * 1. Listening for theme changes from the <h5p-theme-picker> custom element.
+ * 2. Managing local overrides for feedback colors (Correct, Incorrect, Neutral).
+ * 3. Calculating the final set of CSS variables (allColors).
+ * 4. Providing utility functions for copying and downloading the generated CSS.
+ */
 export default function App() {
   // Reference to the h5p-theme-picker custom element
   const pickerRef = useRef<HTMLElement>(null);
@@ -266,6 +280,17 @@ export default function App() {
             <AccessibilityPanel 
               allColors={allColors}
               onColorChange={(key, val) => handleFeedbackColorChange(key, val)}
+            />
+
+            {/* 
+              H5P Preview Panel:
+              This is the core of the comparison functionality.
+              It takes the current theme variables (allColors) and the selected 
+              density, and uses them to render a themed version of any H5P content.
+            */}
+            <H5PPreviewPanel 
+              allColors={allColors} 
+              density={themeData?.data?.density}
             />
           </section>
 

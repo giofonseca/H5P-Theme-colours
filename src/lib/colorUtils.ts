@@ -15,11 +15,16 @@ import Color from 'color';
  * 
  * WCAG 2.0 uses a formula based on relative luminance to determine contrast.
  * Returns a value between 1 (no contrast) and 21 (maximum contrast).
+ * 
+ * @param {string} color1 - The first color (hex, rgb, etc.).
+ * @param {string} color2 - The second color (hex, rgb, etc.).
+ * @returns {number} The contrast ratio. Returns 0 if calculation fails.
  */
 export const getContrastRatio = (color1: string, color2: string): number => {
   try {
     return Color(color1).contrast(Color(color2));
   } catch (e) {
+    console.error(`[ColorUtils] Failed to calculate contrast: ${color1} vs ${color2}`, e);
     return 0;
   }
 };
@@ -32,6 +37,10 @@ export const getContrastRatio = (color1: string, color2: string): number => {
  * - If the background is light, it darkens the foreground.
  * 
  * This ensures the suggested color remains within the same hue/saturation family as the original.
+ * 
+ * @param {string} foreground - The foreground color (text).
+ * @param {string} background - The background color.
+ * @returns {string | null} The suggested hex color, or null if it already meets the standard or fails.
  */
 export const suggestBetterColor = (foreground: string, background: string): string | null => {
   try {
@@ -59,13 +68,19 @@ export const suggestBetterColor = (foreground: string, background: string): stri
     
     return suggested.hex();
   } catch (e) {
+    console.error(`[ColorUtils] Failed to suggest better color for: ${foreground} on ${background}`, e);
     return null;
   }
 };
 
 /**
  * Generates a set of harmonious colors (main, secondary, third) based on HSL values.
- * Used for creating feedback state color sets.
+ * Used for creating feedback state color sets (Correct, Incorrect, Neutral).
+ * 
+ * @param {number} hue - The HSL hue (0-360).
+ * @param {number} saturation - The HSL saturation (0-100).
+ * @param {number} lightness - The HSL lightness (0-100).
+ * @returns {Object} An object containing main, secondary, and third hex colors.
  */
 export const generateFeedbackSet = (hue: number, saturation: number, lightness: number) => {
   const main = Color.hsl(hue, saturation, lightness).hex();
@@ -77,6 +92,9 @@ export const generateFeedbackSet = (hue: number, saturation: number, lightness: 
 
 /**
  * Sanitizes a hex color string, ensuring it starts with '#' and contains only valid hex characters.
+ * 
+ * @param {string} value - The raw color string.
+ * @returns {string} A sanitized hex string (e.g., "#FFFFFF").
  */
 export const sanitizeHex = (value: string): string => {
   // Remove all # characters and non-hex characters
