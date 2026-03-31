@@ -1,0 +1,20 @@
+{
+  "id": "giovanni-fonseca.com.h5p-theme-picker",
+  "name": "H5P Theme Picker",
+  "description": "A specialized tool for designing and testing custom themes for H5P content.",
+  "version": "1.0.0",
+  "author": "Giovanni Fonseca",
+  "website": "https://giovanni-fonseca.com",
+  "contactEmail": "hello@giovanni-fonseca.com",
+  "httpPort": 3000,
+  "manifestVersion": 2,
+  "addons": {},
+  "memoryLimit": 512,
+  "tags": [
+    "h5p",
+    "education",
+    "theme",
+    "moodle",
+    "wordpress"
+  ]
+}
